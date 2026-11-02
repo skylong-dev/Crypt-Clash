@@ -41,6 +41,9 @@ public class Combat : MonoBehaviour
     public AttackSettings[] attackSettings = new AttackSettings[18];
     public float attackCooldown = 0.4f;
 
+    [Header("Attack Animations")]
+    [SerializeField] private Animator animator;
+
     private float nextAttackTime;
 
     [Header("Facing Direction")]
@@ -57,6 +60,16 @@ public class Combat : MonoBehaviour
 
     // Player 1 uses the first connected controller.
     private Gamepad player1Controller;
+
+    private void Awake()
+    {
+        // The Animator can live on a child such as SlimeVisual.
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>();
+
+        if (animator == null)
+            Debug.LogWarning("Combat: No Animator found. Assign the SlimeVisual Animator in the Inspector.");
+    }
 
     private void Update()
     {
@@ -193,6 +206,7 @@ public class Combat : MonoBehaviour
     {
         bool airAttack = !isGrounded;
 
+
         AttackVariation variation =
             GetAttackVariation(airAttack);
 
@@ -229,7 +243,20 @@ public class Combat : MonoBehaviour
             type + " Attack: " + variation
         );
 
+        if (type == AttackType.Light)
+            PlayLightAttackAnimation(variation, airAttack);
+
         CheckForEnemies(settings);
+    }
+
+    private void PlayLightAttackAnimation(AttackVariation variation, bool airAttack)
+    {
+        if (animator == null)
+            return;
+
+        // Examples: LightGroundNeutral, LightGroundForward, LightAirDown.
+        string triggerName = "Light" + (airAttack ? "Air" : "Ground") + variation;
+        animator.SetTrigger(triggerName);
     }
 
     private AttackVariation GetAttackVariation(bool airAttack)

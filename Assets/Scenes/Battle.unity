@@ -2360,7 +2360,7 @@ Transform:
   m_GameObject: {fileID: 788094952}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.5, z: 0}
+  m_LocalPosition: {x: 0, y: -0.2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5390,7 +5390,7 @@ MonoBehaviour:
     horizontalKnockback: 5
     verticalKnockback: 2
   - attackType: 0
-    variation: 0
+    variation: 1
     isAirAttack: 0
     damage: 10
     range: 1.2
@@ -5398,7 +5398,7 @@ MonoBehaviour:
     horizontalKnockback: 5
     verticalKnockback: 2
   - attackType: 0
-    variation: 0
+    variation: 3
     isAirAttack: 0
     damage: 10
     range: 1.2
@@ -5526,12 +5526,13 @@ MonoBehaviour:
     horizontalKnockback: 5
     verticalKnockback: 2
   attackCooldown: 0.4
+  animator: {fileID: 879238878}
   facingRight: 1
-  groundCheck: {fileID: 0}
+  groundCheck: {fileID: 1802584641}
   groundCheckRadius: 0.2
   groundLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
 --- !u!1 &2091721732
 GameObject:
   m_ObjectHideFlags: 0
