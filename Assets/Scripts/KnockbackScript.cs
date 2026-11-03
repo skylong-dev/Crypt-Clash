@@ -7,12 +7,13 @@ public class Knockback : MonoBehaviour
 
     private Rigidbody2D rb;
 
-    // Stops the character from getting knocked back over and over before recovering.
+    // Stops the character from getting knocked back
+    // over and over before recovering.
     private bool canBeKnockedBack = true;
 
     void Start()
     {
-        rb = GetComponentInParent<Rigidbody2D>();
+        rb = GetComponent<Rigidbody2D>();
 
         if (rb == null)
         {
@@ -46,19 +47,30 @@ public class Knockback : MonoBehaviour
             direction = -1f;
         }
 
-        Vector2 knockbackAmount = new Vector2(horizontalForce * direction, verticalForce);
+        Vector2 knockbackAmount = new Vector2(
+            horizontalForce * direction,
+            verticalForce
+        );
 
-        // Reset some of the current movement first, so the knockback is easier to notice.
+        // Reset some of the current movement first
+        // so the knockback is easier to notice.
         rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
 
-        rb.AddForce(knockbackAmount, ForceMode2D.Impulse);
+        rb.AddForce(
+            knockbackAmount,
+            ForceMode2D.Impulse
+        );
 
         Debug.Log("Knockback applied to " + gameObject.name);
     }
 
     public void ResetKnockback()
-    {canBeKnockedBack = true;}
+    {
+        canBeKnockedBack = true;
+    }
 
     public void DisableKnockback()
-    {canBeKnockedBack = false;}
+    {
+        canBeKnockedBack = false;
+    }
 }
