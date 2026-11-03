@@ -12,7 +12,7 @@ public class Knockback : MonoBehaviour
 
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
+        rb = GetComponentInParent<Rigidbody2D>();
 
         if (rb == null)
         {

@@ -37,6 +37,9 @@ public class AttackSettings
 
 public class Combat : MonoBehaviour
 {
+    [Header("Player Settings")]
+    public bool isPlayer1 = true;
+
     [Header("Attack Settings")]
     public AttackSettings[] attackSettings = new AttackSettings[18];
     public float attackCooldown = 0.4f;
@@ -312,8 +315,12 @@ public class Combat : MonoBehaviour
 
         foreach (Collider2D enemy in enemies)
         {
-            if (!enemy.CompareTag("Enemy"))
-                continue;
+            string targetTag = isPlayer1 ? "Player2" : "Player";
+
+            if (!enemy.CompareTag(targetTag))
+            {
+            continue;
+            }
 
             Damage damageScript = enemy.GetComponent<Damage>();
 
