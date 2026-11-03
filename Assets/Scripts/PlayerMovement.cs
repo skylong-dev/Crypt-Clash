@@ -109,6 +109,8 @@ public class PlayerMovement : MonoBehaviour
         // Get Player 1's Rigidbody2D.
         rb = GetComponent<Rigidbody2D>();
 
+        _animator = GetComponentInChildren<Animator>();
+
         _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
         // Give Player 1 their starting jumps.
@@ -189,6 +191,11 @@ public class PlayerMovement : MonoBehaviour
             groundCheckRadius,
             groundLayer
         );
+
+
+        // Grounded check for jump animation
+        _animator.SetBool("IsGrounded", isGrounded);
+
 
         // -----------------------------------------------------
         // LANDING
@@ -285,6 +292,7 @@ public class PlayerMovement : MonoBehaviour
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             jumpBufferTimer = jumpBufferTime;
+
         }
 
         if (jumpBufferTimer > 0)
@@ -301,7 +309,7 @@ public class PlayerMovement : MonoBehaviour
             jumpsRemaining > 0)
         {
             PerformJump();
-
+            _animator.SetTrigger("JumpStart");
             jumpBufferTimer = 0f;
             coyoteTimer = 0f;
         }
@@ -316,6 +324,7 @@ public class PlayerMovement : MonoBehaviour
                  jumpsRemaining > 0)
         {
             PerformJump();
+            _animator.SetTrigger("DoubleJump");
         }
 
 
