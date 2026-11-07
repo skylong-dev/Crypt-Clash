@@ -3,207 +3,133 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
-
     [SerializeField] private Transform facingPivot;
-
     [SerializeField] private Animator _animator;
-                     private SpriteRenderer _spriteRenderer;
-
+    private SpriteRenderer _spriteRenderer;
 
     // =========================================================
-    // GROUND MOVEMENT
+    // INPUT SYSTEM SETUP
     // =========================================================
+    [Header("Input Configuration")]
+    [SerializeField] private PlayerInput playerInput; 
+    private InputAction moveAction;
+    private InputAction jumpAction;
+    private InputAction crouchAction;
+
     [Header("Ground Movement")]
-
     public float maxRunSpeed = 8f;
     public float groundAcceleration = 60f;
     public float groundDeceleration = 70f;
 
+    [Header("Crouch Movement")]
+    public float crouchSpeedMultiplier = 0.5f;
+    [SerializeField] private Collider2D standingCollider;
+    [SerializeField] private Collider2D crouchingCollider;
 
-    // =========================================================
-    // AIR MOVEMENT
-    // =========================================================
     [Header("Air Movement")]
-
     public float maxAirSpeed = 7f;
     public float airAcceleration = 35f;
     public float airDeceleration = 20f;
 
-
-    // =========================================================
-    // JUMP
-    // =========================================================
     [Header("Jump")]
-
     public float jumpForce = 14f;
-
-    // 2 = normal jump + double jump.
-    public int maxJumps = 2;
-
-    // Controls how much the jump is shortened when
-    // the player releases the jump button early.
+    public int maxJumps = 2; 
     public float jumpCutMultiplier = 0.5f;
 
-
-    // =========================================================
-    // JUMP ASSISTANCE
-    // =========================================================
     [Header("Jump Assistance")]
-
     public float coyoteTime = 0.12f;
     public float jumpBufferTime = 0.12f;
 
-
-    // =========================================================
-    // FAST FALL
-    // =========================================================
     [Header("Fast Fall")]
-
     public float fastFallSpeed = 18f;
 
-
-    // =========================================================
-    // GROUND CHECK
-    // =========================================================
     [Header("Ground Check")]
-
-    // The GroundCheck object underneath Player 1.
     public Transform groundCheck;
-
-    // Size of the ground detection circle.
     public float groundCheckRadius = 0.15f;
-
-    // Only objects on this layer count as ground.
     public LayerMask groundLayer;
 
-
-    // =========================================================
-    // PRIVATE VARIABLES
-    // =========================================================
-
     private Rigidbody2D rb;
-
     private float horizontalInput;
-
-    // Number of jumps Player 1 has remaining.
     private int jumpsRemaining;
-
-    // Is Player 1 currently touching the ground?
     private bool isGrounded;
-
-    // Was Player 1 grounded during the previous check?
     private bool wasGrounded;
-
-    // Coyote time countdown.
     private float coyoteTimer;
-
-    // Jump buffer countdown.
     private float jumpBufferTimer;
 
+    private bool isCrouching;
+    private bool isStunned;
+    private float stunTimer;
 
-    // =========================================================
-    // START
-    // =========================================================
-    void Start()
+    void Awake()
     {
-        // Get Player 1's Rigidbody2D.
-        rb = GetComponent<Rigidbody2D>();
-
-        _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-
-        // Give Player 1 their starting jumps.
-        jumpsRemaining = maxJumps;
-
-        // Start with ground detection turned off until
-        // the first ground check happens.
-        isGrounded = false;
+        // Cache your references from the PlayerInput Component
+        if (playerInput == null) playerInput = GetComponent<PlayerInput>();
+        
+        // Match the exact string names you created in your Input Action Asset
+        moveAction = playerInput.actions["Move"];
+        jumpAction = playerInput.actions["Jump"];
+        crouchAction = playerInput.actions["Crouch"];
     }
 
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        jumpsRemaining = maxJumps;
+        isGrounded = false;
+        SetColliderState(false); 
+    }
 
-    // =========================================================
-    // UPDATE
-    // =========================================================
     void Update()
     {
-        GetInput();
-
         CheckGround();
 
-        HandleJump();
+        if (isStunned)
+        {
+            HandleStunTimers();
+            return; 
+        }
 
+        GetInput();
+        HandleCrouch();
+        HandleJump();
         HandleFastFall();
     }
 
-
-    // =========================================================
-    // FIXED UPDATE
-    // =========================================================
     void FixedUpdate()
     {
+        if (isStunned) return; 
         HandleHorizontalMovement();
     }
 
-
-    // =========================================================
-    // GET INPUT
-    // =========================================================
     void GetInput()
     {
-        horizontalInput = 0f;
-        
-        // A = move left.
-        if (Keyboard.current.aKey.isPressed)
+        // Automatically reads from keyboard WASD OR Gamepad D-pad/Joystick
+        Vector2 movementVector = moveAction.ReadValue<Vector2>();
+        horizontalInput = movementVector.x;
+
+        if (Mathf.Abs(horizontalInput) > 0.05f)
         {
-            horizontalInput = -1f;
-            facingPivot.localScale = new Vector3(-1f, 1f, 1f);
+            float direction = Mathf.Sign(horizontalInput);
+            facingPivot.localScale = new Vector3(direction, 1f, 1f);
             _animator.SetBool("IsWalking", true);
         }
-
-        // D = move right.
-        if (Keyboard.current.dKey.isPressed)
-        {
-            horizontalInput = 1f;
-            facingPivot.localScale = new Vector3(1f, 1f, 1f);
-            _animator.SetBool("IsWalking", true);
-        }
-
-        if (!Keyboard.current.aKey.isPressed && !Keyboard.current.dKey.isPressed)
+        else
         {
             _animator.SetBool("IsWalking", false);
         }
-
     }
 
-
-    // =========================================================
-    // CHECK GROUND
-    // =========================================================
     void CheckGround()
     {
-        // Remember the previous grounded state.
         wasGrounded = isGrounded;
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
-        // Check whether GroundCheck is touching the Ground layer.
-        isGrounded = Physics2D.OverlapCircle(
-            groundCheck.position,
-            groundCheckRadius,
-            groundLayer
-        );
-
-        // -----------------------------------------------------
-        // LANDING
-        // -----------------------------------------------------
-        // Only give the jumps back when the player actually
-        // goes from being in the air to being on the ground.
-        // -----------------------------------------------------
         if (!wasGrounded && isGrounded)
         {
             jumpsRemaining = maxJumps;
         }
 
-        // -----------------------------------------------------
-        // COYOTE TIME
-        // -----------------------------------------------------
         if (wasGrounded && !isGrounded)
         {
             coyoteTimer = coyoteTime;
@@ -219,70 +145,66 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-
-    // =========================================================
-    // HORIZONTAL MOVEMENT
-    // =========================================================
     void HandleHorizontalMovement()
     {
         float targetSpeed;
         float acceleration;
 
-        // -----------------------------------------------------
-        // GROUND MOVEMENT
-        // -----------------------------------------------------
         if (isGrounded)
         {
-            targetSpeed = horizontalInput * maxRunSpeed;
-
-            if (Mathf.Abs(horizontalInput) > 0.01f)
-            {
-                acceleration = groundAcceleration;
-            }
-            else
-            {
-                acceleration = groundDeceleration;
-            }
+            float currentMaxSpeed = isCrouching ? maxRunSpeed * crouchSpeedMultiplier : maxRunSpeed;
+            targetSpeed = horizontalInput * currentMaxSpeed;
+            acceleration = Mathf.Abs(horizontalInput) > 0.01f ? groundAcceleration : groundDeceleration;
         }
-
-        // -----------------------------------------------------
-        // AIR MOVEMENT
-        // -----------------------------------------------------
         else
         {
             targetSpeed = horizontalInput * maxAirSpeed;
-
-            if (Mathf.Abs(horizontalInput) > 0.01f)
-            {
-                acceleration = airAcceleration;
-            }
-            else
-            {
-                acceleration = airDeceleration;
-            }
+            acceleration = Mathf.Abs(horizontalInput) > 0.01f ? airAcceleration : airDeceleration;
         }
 
-        // Change horizontal speed without changing vertical speed.
         rb.linearVelocity = new Vector2(
-            Mathf.MoveTowards(
-                rb.linearVelocity.x,
-                targetSpeed,
-                acceleration * Time.fixedDeltaTime
-            ),
+            Mathf.MoveTowards(rb.linearVelocity.x, targetSpeed, acceleration * Time.fixedDeltaTime),
             rb.linearVelocity.y
         );
     }
 
+    void HandleCrouch()
+    {
+        // Detects if crouch binding is held down (Keyboard S or Gamepad button)
+        if (crouchAction.IsPressed() && isGrounded)
+        {
+            if (!isCrouching)
+            {
+                isCrouching = true;
+                _animator.SetBool("IsCrouching", true);
+                SetColliderState(true);
+            }
+        }
+        else
+        {
+            if (isCrouching)
+            {
+                isCrouching = false;
+                _animator.SetBool("IsCrouching", false);
+                SetColliderState(false);
+            }
+        }
+    }
 
-    // =========================================================
-    // JUMP
-    // =========================================================
+    private void SetColliderState(bool crouching)
+    {
+        if (standingCollider != null && crouchingCollider != null)
+        {
+            standingCollider.enabled = !crouching;
+            crouchingCollider.enabled = crouching;
+        }
+    }
+
     void HandleJump()
     {
-        // -----------------------------------------------------
-        // JUMP BUFFER
-        // -----------------------------------------------------
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (isCrouching) return;
+
+        if (jumpAction.WasPressedThisFrame())
         {
             jumpBufferTimer = jumpBufferTime;
         }
@@ -292,93 +214,72 @@ public class PlayerMovement : MonoBehaviour
             jumpBufferTimer -= Time.deltaTime;
         }
 
-
-        // -----------------------------------------------------
-        // FIRST JUMP
-        // -----------------------------------------------------
-        if (jumpBufferTimer > 0 &&
-            (isGrounded || coyoteTimer > 0) &&
-            jumpsRemaining > 0)
+        if (jumpBufferTimer > 0 && (isGrounded || coyoteTimer > 0) && jumpsRemaining > 0)
         {
             PerformJump();
-
             jumpBufferTimer = 0f;
             coyoteTimer = 0f;
         }
-
-
-        // -----------------------------------------------------
-        // DOUBLE JUMP
-        // -----------------------------------------------------
-        else if (Keyboard.current.spaceKey.wasPressedThisFrame &&
-                 !isGrounded &&
-                 coyoteTimer <= 0 &&
-                 jumpsRemaining > 0)
+        else if (jumpAction.WasPressedThisFrame() && !isGrounded && coyoteTimer <= 0 && jumpsRemaining > 0)
         {
             PerformJump();
         }
 
-
-        // -----------------------------------------------------
-        // VARIABLE JUMP HEIGHT
-        // -----------------------------------------------------
-        if (Keyboard.current.spaceKey.wasReleasedThisFrame &&
-            rb.linearVelocity.y > 0)
+        if (jumpAction.WasReleasedThisFrame() && rb.linearVelocity.y > 0)
         {
-            rb.linearVelocity = new Vector2(
-                rb.linearVelocity.x,
-                rb.linearVelocity.y * jumpCutMultiplier
-            );
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * jumpCutMultiplier);
         }
     }
 
-
-    // =========================================================
-    // PERFORM JUMP
-    // =========================================================
     void PerformJump()
     {
-        // Give Player 1 upward velocity.
-        rb.linearVelocity = new Vector2(
-            rb.linearVelocity.x,
-            jumpForce
-        );
-
-        // Use one jump.
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
         jumpsRemaining--;
     }
 
-
-    // =========================================================
-    // FAST FALL
-    // =========================================================
     void HandleFastFall()
     {
-        // S makes Player 1 fall faster.
-        if (!isGrounded &&
-            Keyboard.current.sKey.isPressed &&
-            rb.linearVelocity.y < 0)
+        // Vector2 down check for the stick configuration or down key map
+        Vector2 movementVector = moveAction.ReadValue<Vector2>();
+        bool pullingDown = movementVector.y < -0.5f || crouchAction.IsPressed();
+
+        if (!isGrounded && pullingDown && rb.linearVelocity.y < 0)
         {
-            rb.linearVelocity = new Vector2(
-                rb.linearVelocity.x,
-                -fastFallSpeed
-            );
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, -fastFallSpeed);
         }
     }
 
+    public void ApplyKnockback(Vector2 force, float stunDuration)
+    {
+        isStunned = true;
+        stunTimer = stunDuration;
 
-    // =========================================================
-    // GROUND CHECK VISUALIZATION
-    // =========================================================
+        if (isCrouching)
+        {
+            isCrouching = false;
+            _animator.SetBool("IsCrouching", false);
+            SetColliderState(false);
+        }
+
+        _animator.SetBool("IsWalking", false);
+        _animator.SetTrigger("HitStun");
+        rb.linearVelocity = force;
+    }
+
+    private void HandleStunTimers()
+    {
+        stunTimer -= Time.deltaTime;
+        if (stunTimer <= 0f)
+        {
+            isStunned = false;
+        }
+    }
+
     void OnDrawGizmosSelected()
     {
-        // Draw the GroundCheck circle in the Scene view.
         if (groundCheck != null)
         {
-            Gizmos.DrawWireSphere(
-                groundCheck.position,
-                groundCheckRadius
-            );
+            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
         }
     }
 }
