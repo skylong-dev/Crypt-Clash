@@ -2329,6 +2329,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleCharacterSpawner
   player1SpawnPoint: {fileID: 1175570954}
   player2SpawnPoint: {fileID: 1131238715}
+  player1Prefab: {fileID: 2614296963883142849, guid: 08029960d34cc5e429d5687600f61f2f, type: 3}
+  player2Prefab: {fileID: 2614296963883142849, guid: 08029960d34cc5e429d5687600f61f2f, type: 3}
 --- !u!4 &861292553
 Transform:
   m_ObjectHideFlags: 0
