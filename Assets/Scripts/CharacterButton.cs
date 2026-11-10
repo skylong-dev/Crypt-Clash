@@ -1,15 +1,10 @@
-
 using UnityEngine;
 using UnityEngine.UI;
 
 public class CharacterButton : MonoBehaviour
 {
     public CharacterSelectManager characterSelectManager;
-
     public Sprite characterSprite;
-
-    public GameObject characterPrefab;
-
     public Button button;
 
     private void Awake()
@@ -27,17 +22,11 @@ public class CharacterButton : MonoBehaviour
             button.onClick.RemoveListener(OnCharacterClicked);
     }
 
-
     public void OnCharacterClicked()
     {
-        if (characterSelectManager != null &&
-            characterPrefab != null &&
-            characterSprite != null)
+        if (characterSelectManager != null)
         {
-            characterSelectManager.SelectCharacter(
-                characterSprite,
-                characterPrefab
-            );
+            characterSelectManager.SelectCharacter(characterSprite);
         }
     }
 }

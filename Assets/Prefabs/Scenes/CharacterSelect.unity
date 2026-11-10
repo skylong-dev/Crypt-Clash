@@ -767,8 +767,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: fa629bc54b4e04d1181001dce9cecaaa, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -1097,7 +1097,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -82}
+  m_AnchoredPosition: {x: 0, y: -80}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &873254524
@@ -1227,8 +1227,8 @@ MonoBehaviour:
   player2Portrait: {fileID: 615173747}
   player1ConfirmButton: {fileID: 1678178862}
   player2ConfirmButton: {fileID: 1691177563}
-  player1Highlight: {fileID: 2056989193}
-  player2Highlight: {fileID: 2056989193}
+  player1Highlight: {fileID: 0}
+  player2Highlight: {fileID: 0}
   nextSceneName: MapSelection
 --- !u!4 &1093961270
 Transform:
@@ -1521,7 +1521,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterButton
   characterSelectManager: {fileID: 1093961269}
   characterSprite: {fileID: 3605578313848945866, guid: 1676e8cb2862f584ba6bb5f980f59790, type: 3}
-  characterPrefab: {fileID: 2614296963883142849, guid: 08029960d34cc5e429d5687600f61f2f, type: 3}
   button: {fileID: 1203175697}
 --- !u!1 &1291198857
 GameObject:
@@ -2316,7 +2315,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterButton
   characterSelectManager: {fileID: 1093961269}
   characterSprite: {fileID: 277447018299213849, guid: 41088efeef8a6854d898e1564e19ca5d, type: 3}
-  characterPrefab: {fileID: 2614296963883142849, guid: 08029960d34cc5e429d5687600f61f2f, type: 3}
   button: {fileID: 1722062021}
 --- !u!1 &1792488303
 GameObject:
@@ -2375,8 +2373,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 2040b8017022c467eb49ad24ffc4907a, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4

@@ -1,5 +1,4 @@
 
-
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -24,9 +23,6 @@ public class CharacterSelectManager : MonoBehaviour
     private Sprite player1Character;
     private Sprite player2Character;
 
-    private GameObject player1Prefab;
-    private GameObject player2Prefab;
-
     private bool player1Confirmed;
     private bool player2Confirmed;
 
@@ -45,45 +41,29 @@ public class CharacterSelectManager : MonoBehaviour
         UpdateConfirmButtons();
     }
 
-    // Called when a character button is clicked.
-    public void SelectCharacter(Sprite characterSprite, GameObject characterPrefab)
+    // Call this when a character button is clicked.
+    public void SelectCharacter(Sprite characterSprite)
     {
-        if (characterSprite == null || characterPrefab == null)
-        {
-            Debug.LogWarning("Character sprite or prefab is missing!");
+        if (characterSprite == null)
             return;
-        }
 
         if (activePlayer == 1 && !player1Confirmed)
         {
             player1Character = characterSprite;
-            player1Prefab = characterPrefab;
-
-            if (player1Portrait != null)
-            {
-                player1Portrait.sprite = characterSprite;
-                player1Portrait.enabled = true;
-            }
-
-            Debug.Log("Player 1 selected: " + characterPrefab.name);
+            player1Portrait.sprite = characterSprite;
+            player1Portrait.enabled = true;
         }
         else if (activePlayer == 2 && !player2Confirmed)
         {
             player2Character = characterSprite;
-            player2Prefab = characterPrefab;
-
-            if (player2Portrait != null)
-            {
-                player2Portrait.sprite = characterSprite;
-                player2Portrait.enabled = true;
-            }
-
-            Debug.Log("Player 2 selected: " + characterPrefab.name);
+            player2Portrait.sprite = characterSprite;
+            player2Portrait.enabled = true;
         }
 
         UpdateConfirmButtons();
     }
 
+    // Connect this to a Player 1 selection button.
     public void SelectPlayer1()
     {
         if (!player1Confirmed)
@@ -92,6 +72,7 @@ public class CharacterSelectManager : MonoBehaviour
         UpdateHighlights();
     }
 
+    // Connect this to a Player 2 selection button.
     public void SelectPlayer2()
     {
         if (!player2Confirmed)
@@ -102,14 +83,13 @@ public class CharacterSelectManager : MonoBehaviour
 
     private void ConfirmPlayer1()
     {
-        if (player1Character == null || player1Prefab == null)
+        if (player1Character == null)
         {
             Debug.Log("Player 1: Select a character first!");
             return;
         }
 
         player1Confirmed = true;
-
         UpdateConfirmButtons();
         UpdateHighlights();
         CheckBothConfirmed();
@@ -117,14 +97,13 @@ public class CharacterSelectManager : MonoBehaviour
 
     private void ConfirmPlayer2()
     {
-        if (player2Character == null || player2Prefab == null)
+        if (player2Character == null)
         {
             Debug.Log("Player 2: Select a character first!");
             return;
         }
 
         player2Confirmed = true;
-
         UpdateConfirmButtons();
         UpdateHighlights();
         CheckBothConfirmed();
@@ -141,12 +120,11 @@ public class CharacterSelectManager : MonoBehaviour
 
     private void UpdateHighlights()
     {
-        // Keep both selection buttons visible
         if (player1Highlight != null)
-            player1Highlight.SetActive(true);
+            player1Highlight.SetActive(activePlayer == 1);
 
         if (player2Highlight != null)
-            player2Highlight.SetActive(true);
+            player2Highlight.SetActive(activePlayer == 2);
     }
 
     private void CheckBothConfirmed()
@@ -155,15 +133,10 @@ public class CharacterSelectManager : MonoBehaviour
         {
             Debug.Log("Both players confirmed their characters!");
 
-            // Save Player 1
+            // Save the selections before changing scenes.
             CharacterSelectionData.Player1Character = player1Character;
-            CharacterSelectionData.Player1Prefab = player1Prefab;
-
-            // Save Player 2
             CharacterSelectionData.Player2Character = player2Character;
-            CharacterSelectionData.Player2Prefab = player2Prefab;
 
-            // Move to Map Selection
             SceneManager.LoadScene(nextSceneName);
         }
     }
