@@ -69,6 +69,19 @@ public class PlayerMovement : MonoBehaviour
         moveAction = playerInput.actions["Move"];
         jumpAction = playerInput.actions["Jump"];
         crouchAction = playerInput.actions["Crouch"];
+        // Get Player 1's Rigidbody2D.
+        rb = GetComponent<Rigidbody2D>();
+
+        _animator = GetComponentInChildren<Animator>();
+
+        _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+
+        // Give Player 1 their starting jumps.
+        jumpsRemaining = maxJumps;
+
+        // Start with ground detection turned off until
+        // the first ground check happens.
+        isGrounded = false;
     }
 
     void Start()
@@ -125,6 +138,24 @@ public class PlayerMovement : MonoBehaviour
         wasGrounded = isGrounded;
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
+        // Check whether GroundCheck is touching the Ground layer.
+        isGrounded = Physics2D.OverlapCircle(
+            groundCheck.position,
+            groundCheckRadius,
+            groundLayer
+        );
+
+
+        // Grounded check for jump animation
+        _animator.SetBool("IsGrounded", isGrounded);
+
+
+        // -----------------------------------------------------
+        // LANDING
+        // -----------------------------------------------------
+        // Only give the jumps back when the player actually
+        // goes from being in the air to being on the ground.
+        // -----------------------------------------------------
         if (!wasGrounded && isGrounded)
         {
             jumpsRemaining = maxJumps;
@@ -207,6 +238,7 @@ public class PlayerMovement : MonoBehaviour
         if (jumpAction.WasPressedThisFrame())
         {
             jumpBufferTimer = jumpBufferTime;
+
         }
 
         if (jumpBufferTimer > 0)
@@ -217,12 +249,14 @@ public class PlayerMovement : MonoBehaviour
         if (jumpBufferTimer > 0 && (isGrounded || coyoteTimer > 0) && jumpsRemaining > 0)
         {
             PerformJump();
+            _animator.SetTrigger("JumpStart");
             jumpBufferTimer = 0f;
             coyoteTimer = 0f;
         }
         else if (jumpAction.WasPressedThisFrame() && !isGrounded && coyoteTimer <= 0 && jumpsRemaining > 0)
         {
             PerformJump();
+            _animator.SetTrigger("DoubleJump");
         }
 
         if (jumpAction.WasReleasedThisFrame() && rb.linearVelocity.y > 0)
