@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 1113339237470413814}
   - component: {fileID: 3501164321718450616}
   - component: {fileID: 300230354436247690}
+  - component: {fileID: 7144738357017791458}
   m_Layer: 0
   m_Name: Slime
   m_TagString: Player
@@ -156,9 +157,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   facingPivot: {fileID: 8727874972349708683}
   _animator: {fileID: 7230008061588271888}
+  playerInput: {fileID: 0}
   maxRunSpeed: 8
   groundAcceleration: 60
   groundDeceleration: 70
+  crouchSpeedMultiplier: 0.5
+  standingCollider: {fileID: 0}
+  crouchingCollider: {fileID: 0}
   maxAirSpeed: 7
   airAcceleration: 35
   airDeceleration: 20
@@ -338,6 +343,38 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
+  hitStunDuration: 0.5
+  movementScript: {fileID: 0}
+--- !u!114 &7144738357017791458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2614296963883142849}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
+  m_Actions: {fileID: -944628639613478452, guid: 15c8ba7fd2134db41acf509b276c564c, type: 3}
+  m_NotificationBehavior: 0
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents: []
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: Player
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}
 --- !u!1 &3420011265937030927
 GameObject:
   m_ObjectHideFlags: 0

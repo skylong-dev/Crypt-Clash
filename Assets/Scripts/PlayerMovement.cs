@@ -11,7 +11,7 @@ public class PlayerMovement : MonoBehaviour
     // INPUT SYSTEM SETUP
     // =========================================================
     [Header("Input Configuration")]
-    [SerializeField] private PlayerInput playerInput; 
+    [SerializeField] private PlayerInput playerInput;
     private InputAction moveAction;
     private InputAction jumpAction;
     private InputAction crouchAction;
@@ -33,7 +33,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Jump")]
     public float jumpForce = 14f;
-    public int maxJumps = 2; 
+    public int maxJumps = 2;
     public float jumpCutMultiplier = 0.5f;
 
     [Header("Jump Assistance")]
@@ -62,21 +62,12 @@ public class PlayerMovement : MonoBehaviour
 
     void Awake()
     {
-        // Cache your references from the PlayerInput Component
-        if (playerInput == null) playerInput = GetComponent<PlayerInput>();
-        
-        // Match the exact string names you created in your Input Action Asset
-        moveAction = playerInput.actions["Move"];
-        jumpAction = playerInput.actions["Jump"];
-        crouchAction = playerInput.actions["Crouch"];
-        // Get Player 1's Rigidbody2D.
         rb = GetComponent<Rigidbody2D>();
 
         _animator = GetComponentInChildren<Animator>();
 
         _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
-        // Give Player 1 their starting jumps.
         jumpsRemaining = maxJumps;
 
         // Start with ground detection turned off until
@@ -90,7 +81,28 @@ public class PlayerMovement : MonoBehaviour
         _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         jumpsRemaining = maxJumps;
         isGrounded = false;
-        SetColliderState(false); 
+        SetColliderState(false);
+
+        if (playerInput == null)
+            playerInput = GetComponent<PlayerInput>();
+
+        // PlayerInput initializes each fighter's action instance before Start.
+        var actions = playerInput != null ? playerInput.actions : null;
+        if (actions == null)
+        {
+            Debug.LogError("PlayerMovement needs a PlayerInput with the Controls asset assigned.", this);
+            enabled = false;
+            return;
+        }
+
+        moveAction = actions.FindAction("Player/Move");
+        jumpAction = actions.FindAction("Player/Jump");
+        crouchAction = actions.FindAction("Player/Crouch");
+        if (moveAction == null || jumpAction == null || crouchAction == null)
+        {
+            Debug.LogError("PlayerMovement needs Move, Jump, and Crouch in the Player action map.", this);
+            enabled = false;
+        }
     }
 
     void Update()
@@ -100,7 +112,7 @@ public class PlayerMovement : MonoBehaviour
         if (isStunned)
         {
             HandleStunTimers();
-            return; 
+            return;
         }
 
         GetInput();
@@ -111,13 +123,12 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (isStunned) return; 
+        if (isStunned) return;
         HandleHorizontalMovement();
     }
 
     void GetInput()
     {
-        // Automatically reads from keyboard WASD OR Gamepad D-pad/Joystick
         Vector2 movementVector = moveAction.ReadValue<Vector2>();
         horizontalInput = movementVector.x;
 
