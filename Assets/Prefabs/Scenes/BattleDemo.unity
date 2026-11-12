@@ -300,11 +300,14 @@ MonoBehaviour:
   attackCooldown: 0.4
   animator: {fileID: 0}
   facingRight: 1
+  facingPivot: {fileID: 0}
   groundCheck: {fileID: 0}
   groundCheckRadius: 0.2
   groundLayer:
     serializedVersion: 2
     m_Bits: 0
+  hitStunDuration: 0.5
+  movementScript: {fileID: 0}
 --- !u!114 &14163651
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -319,7 +322,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   facingPivot: {fileID: 1268125314}
   _animator: {fileID: 1399633765}
-  playerInput: {fileID: 0}
+  playerInput: {fileID: 14163655}
   maxRunSpeed: 8
   groundAcceleration: 60
   groundDeceleration: 70
