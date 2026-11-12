@@ -45,7 +45,9 @@ GameObject:
   - component: {fileID: 1113339237470413814}
   - component: {fileID: 3501164321718450616}
   - component: {fileID: 300230354436247690}
+  - component: {fileID: 2944181878922641427}
   - component: {fileID: 7144738357017791458}
+  - component: {fileID: 2888302947527584836}
   m_Layer: 0
   m_Name: Slime
   m_TagString: Player
@@ -338,6 +340,7 @@ MonoBehaviour:
   attackCooldown: 0.4
   animator: {fileID: 7230008061588271888}
   facingRight: 1
+  facingPivot: {fileID: 0}
   groundCheck: {fileID: 0}
   groundCheckRadius: 0.2
   groundLayer:
@@ -345,6 +348,22 @@ MonoBehaviour:
     m_Bits: 8
   hitStunDuration: 0.5
   movementScript: {fileID: 0}
+--- !u!114 &2944181878922641427
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2614296963883142849}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2a5fc31cc8a7e24e857fa11c58e9f6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Damage
+  maxHealth: 100
+  health: 100
+  playerNumber: 1
+  respawnPoint: {fileID: 0}
 --- !u!114 &7144738357017791458
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -375,6 +394,20 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &2888302947527584836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2614296963883142849}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd633e273ae308c47bbcf7c593f5c3d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Knockback
+  defaultKnockback: 5
+  upwardForce: 2
 --- !u!1 &3420011265937030927
 GameObject:
   m_ObjectHideFlags: 0

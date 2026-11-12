@@ -42,6 +42,9 @@ public class BattleCharacterSpawner : MonoBehaviour
             player1ToSpawn, player1SpawnPoint.position, Quaternion.identity
         );
 
+        // After spawning Player 1
+        spawnedPlayer1.GetComponent<Damage>()?.InitializeForMatch(1, player1SpawnPoint);
+
         var gamepad = Gamepad.current;
         var joystick = Joystick.current;
 
@@ -53,6 +56,10 @@ public class BattleCharacterSpawner : MonoBehaviour
         GameObject spawnedPlayer2 = Instantiate(
             player2ToSpawn, player2SpawnPoint.position, Quaternion.identity
         );
+
+        // After spawning Player 2
+        spawnedPlayer2.GetComponent<Damage>()?.InitializeForMatch(2, player2SpawnPoint);
+
         ConfigureInput(spawnedPlayer2, "Keyboard", Keyboard.current);
     }
 
