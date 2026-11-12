@@ -35,6 +35,26 @@
                     "interactions": "",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "LightAttack",
+                    "type": "Button",
+                    "id": "1598d955-1dbc-4bce-b89e-cea4e75d1a58",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                },
+                {
+                    "name": "HeavyAttack",
+                    "type": "Button",
+                    "id": "0c713105-9e01-4dfa-94af-6db84d487d93",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -140,7 +160,7 @@
                 {
                     "name": "",
                     "id": "6ce4bb17-b649-4920-8088-f6b506820df0",
-                    "path": "<Gamepad>/buttonSouth",
+                    "path": "<Gamepad>/buttonNorth",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad;Wired Controller",
@@ -151,7 +171,7 @@
                 {
                     "name": "",
                     "id": "3a51e9c4-630e-4dba-91a4-3dd1541e5537",
-                    "path": "<HID::BDA NSW wired controller>/trigger",
+                    "path": "<HID::BDA NSW wired controller>/button4",
                     "interactions": "",
                     "processors": "",
                     "groups": ";Joystick",
@@ -189,6 +209,72 @@
                     "processors": "",
                     "groups": ";Joystick",
                     "action": "Crouch",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9baff246-1ee1-43ae-ab9b-3c94eedeac59",
+                    "path": "<Keyboard>/j",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LightAttack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3d239fae-02ec-4a70-a584-0c28eb1b0db8",
+                    "path": "<Gamepad>/buttonWest",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LightAttack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "62a83d9c-7e1c-4eed-b2a0-883c03a7ca23",
+                    "path": "<HID::BDA NSW wired controller>/trigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LightAttack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "815d2b82-2519-4c4f-95c0-f949dfd636ef",
+                    "path": "<Keyboard>/k",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "HeavyAttack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0e8a1499-4823-4d11-ae32-3d75862f6400",
+                    "path": "<Gamepad>/buttonEast",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "HeavyAttack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3e155943-10b0-4dcf-a2e1-3708c7cb6694",
+                    "path": "<HID::BDA NSW wired controller>/button3",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "HeavyAttack",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -50,6 +49,7 @@ public class Combat : MonoBehaviour
 
     [Header("Facing Direction")]
     public bool facingRight = true;
+    [SerializeField] private Transform facingPivot;
 
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -68,127 +68,114 @@ public class Combat : MonoBehaviour
 
     private bool isStunned;
     private bool movementWasEnabled;
-    private Coroutine hitStunCoroutine;
+    private float hitStunEndsAt;
 
-    // Player 1 uses the first connected controller.
-    private Gamepad player1Controller;
+    private PlayerInput playerInput;
+    private InputAction moveAction;
+    private InputAction lightAttackAction;
+    private InputAction heavyAttackAction;
+    private Damage damageReceiver;
+    private Knockback knockbackReceiver;
 
     private void Awake()
     {
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
 
-        if (animator == null)
+        if (facingPivot == null)
+            facingPivot = transform.Find("FacingPivot");
+
+        var movement = GetComponent<PlayerMovement>();
+        if (movementScript == null)
+            movementScript = movement;
+
+        if (groundCheck == null && movement != null)
+        {
+            groundCheck = movement.groundCheck;
+            groundCheckRadius = movement.groundCheckRadius;
+            groundLayer = movement.groundLayer;
+        }
+
+        damageReceiver = FindFighterComponent<Damage>();
+        knockbackReceiver = FindFighterComponent<Knockback>();
+    }
+
+    private T FindFighterComponent<T>() where T : Component
+    {
+        T component = GetComponent<T>();
+        if (component == null)
+            component = GetComponentInChildren<T>();
+
+        return component != null ? component : GetComponentInParent<T>();
+    }
+
+    private void Start()
+    {
+        playerInput = GetComponent<PlayerInput>();
+        var actions = playerInput != null ? playerInput.actions : null;
+        if (actions == null)
+        {
+            Debug.LogWarning("Combat needs the fighter's Player Input and Controls asset.", this);
+            return;
+        }
+
+        moveAction = actions.FindAction("Player/Move");
+        lightAttackAction = actions.FindAction("Player/LightAttack");
+        heavyAttackAction = actions.FindAction("Player/HeavyAttack");
+
+        if (moveAction == null || lightAttackAction == null || heavyAttackAction == null)
         {
             Debug.LogWarning(
-                "Combat: No Animator found. Assign the Animator in the Inspector."
+                "Combat expects Move, LightAttack, and HeavyAttack in the Player action map.",
+                this
             );
         }
     }
 
-    private void Update()
+    private void LateUpdate()
     {
-        UpdatePlayer1Controller();
-        ReadDirectionInput();
-        UpdateGrounded();
-
-        // Prevent attacking while in hit stun.
         if (isStunned)
-            return;
-
-        if (Time.time < nextAttackTime)
-            return;
-
-        // Keyboard controls.
-        if (Keyboard.current != null)
         {
-            if (Keyboard.current.jKey.wasPressedThisFrame)
-            {
-                LightAttack();
+            if (Time.time < hitStunEndsAt)
                 return;
-            }
 
-            if (Keyboard.current.kKey.wasPressedThisFrame)
-            {
-                HeavyAttack();
-                return;
-            }
+            ClearHitStun();
         }
 
-        // Player 1 controller:
-        // X (Xbox) / Square (PlayStation) = Light Attack.
-        if (player1Controller != null &&
-            player1Controller.buttonWest.wasPressedThisFrame)
+        if (playerInput == null || !playerInput.inputIsActive ||
+            moveAction == null || !moveAction.enabled || Time.time < nextAttackTime ||
+            (damageReceiver != null && damageReceiver.IsDefeated()))
         {
-            LightAttack();
+            return;
         }
-    }
 
-    private void UpdatePlayer1Controller()
-    {
-        if (Gamepad.all.Count > 0)
-            player1Controller = Gamepad.all[0];
-        else
-            player1Controller = null;
+        if (lightAttackAction != null && lightAttackAction.enabled && lightAttackAction.WasPressedThisFrame())
+            PerformAttack(AttackType.Light);
+        else if (heavyAttackAction != null && heavyAttackAction.enabled && heavyAttackAction.WasPressedThisFrame())
+            PerformAttack(AttackType.Heavy);
     }
 
     private void ReadDirectionInput()
     {
-        horizontalInput = 0f;
-        verticalInput = 0f;
+        Vector2 direction = moveAction.ReadValue<Vector2>();
 
-        if (Keyboard.current != null)
+        var keyboard = playerInput.GetDevice<Keyboard>();
+        if (keyboard != null)
         {
-            bool left =
-                Keyboard.current.aKey.isPressed ||
-                Keyboard.current.leftArrowKey.isPressed;
-
-            bool right =
-                Keyboard.current.dKey.isPressed ||
-                Keyboard.current.rightArrowKey.isPressed;
-
-            bool down =
-                Keyboard.current.sKey.isPressed ||
-                Keyboard.current.downArrowKey.isPressed;
-
-            bool up =
-                Keyboard.current.wKey.isPressed ||
-                Keyboard.current.upArrowKey.isPressed;
-
-            if (left != right)
-                horizontalInput = right ? 1f : -1f;
-
-            if (up != down)
-                verticalInput = up ? 1f : -1f;
+            bool left = direction.x < 0f || keyboard.leftArrowKey.isPressed;
+            bool right = direction.x > 0f || keyboard.rightArrowKey.isPressed;
+            bool down = direction.y < 0f || keyboard.downArrowKey.isPressed;
+            bool up = direction.y > 0f || keyboard.upArrowKey.isPressed;
+            direction.x = (right ? 1f : 0f) - (left ? 1f : 0f);
+            direction.y = (up ? 1f : 0f) - (down ? 1f : 0f);
         }
 
-        // Controller directional input overrides keyboard input.
-        if (player1Controller != null)
-        {
-            Vector2 stick =
-                player1Controller.leftStick.ReadValue();
+        var gamepad = playerInput.GetDevice<Gamepad>();
+        if (gamepad != null && direction.sqrMagnitude <= 0.25f * 0.25f)
+            direction = gamepad.dpad.ReadValue();
 
-            Vector2 dpad =
-                player1Controller.dpad.ReadValue();
-
-            Vector2 controllerInput = dpad;
-
-            if (stick.magnitude > 0.25f)
-                controllerInput = stick;
-
-            if (controllerInput.magnitude > 0.25f)
-            {
-                horizontalInput =
-                    Mathf.Abs(controllerInput.x) > 0.25f
-                    ? Mathf.Sign(controllerInput.x)
-                    : 0f;
-
-                verticalInput =
-                    Mathf.Abs(controllerInput.y) > 0.25f
-                    ? Mathf.Sign(controllerInput.y)
-                    : 0f;
-            }
-        }
+        horizontalInput = Mathf.Abs(direction.x) > 0.25f ? Mathf.Sign(direction.x) : 0f;
+        verticalInput = Mathf.Abs(direction.y) > 0.25f ? Mathf.Sign(direction.y) : 0f;
     }
 
     private void UpdateGrounded()
@@ -206,92 +193,66 @@ public class Combat : MonoBehaviour
         );
     }
 
-    private void LightAttack()
-    {
-        PerformAttack(AttackType.Light);
-    }
-
-    private void HeavyAttack()
-    {
-        PerformAttack(AttackType.Heavy);
-    }
-
     private void PerformAttack(AttackType type)
     {
-        if (isStunned)
-            return;
+        if (facingPivot != null)
+            facingRight = facingPivot.localScale.x >= 0f;
 
+        ReadDirectionInput();
+        UpdateGrounded();
         bool airAttack = !isGrounded;
-
-        AttackVariation variation =
-            GetAttackVariation(airAttack);
-
-        AttackSettings settings = null;
-
-        if (attackSettings != null)
-        {
-            foreach (AttackSettings item in attackSettings)
-            {
-                if (item == null)
-                    continue;
-
-                if (item.attackType == type &&
-                    item.variation == variation &&
-                    item.isAirAttack == airAttack)
-                {
-                    settings = item;
-                    break;
-                }
-            }
-        }
+        AttackVariation variation = GetAttackVariation(airAttack);
+        AttackSettings settings = FindAttackSettings(type, variation, airAttack);
 
         if (settings == null)
         {
-            Debug.LogWarning(
-                "Missing attack settings: " + type + " " +
-                variation + (airAttack ? " Air" : " Ground")
-            );
-
+            Debug.LogWarning($"Missing {type} attack settings for {(airAttack ? "Air" : "Ground")}. Add a Neutral entry.", this);
             return;
         }
 
         nextAttackTime = Time.time + attackCooldown;
-
-        Debug.Log(
-            (airAttack ? "Air " : "Ground ") +
-            type + " Attack: " + variation
-        );
-
-        if (type == AttackType.Light)
-            PlayLightAttackAnimation(variation, airAttack);
-
+        PlayAttackAnimation(type, settings.variation, airAttack);
         CheckForEnemies(settings);
     }
 
-    private void PlayLightAttackAnimation(
-        AttackVariation variation,
-        bool airAttack)
+    private AttackSettings FindAttackSettings(AttackType type, AttackVariation variation, bool airAttack)
     {
-        if (animator == null)
+        if (attackSettings == null)
+            return null;
+
+        AttackSettings neutral = null;
+        foreach (AttackSettings settings in attackSettings)
+        {
+            if (settings == null || settings.attackType != type || settings.isAirAttack != airAttack)
+                continue;
+
+            if (settings.variation == variation)
+                return settings;
+
+            if (neutral == null && settings.variation == AttackVariation.Neutral)
+                neutral = settings;
+        }
+
+        return neutral;
+    }
+
+    private void PlayAttackAnimation(AttackType type, AttackVariation variation, bool airAttack)
+    {
+        if (animator == null || animator.runtimeAnimatorController == null)
             return;
 
-        string triggerName =
-            "Light" + (airAttack ? "Air" : "Ground") + variation;
-
-        // Only use triggers that actually exist in the Animator.
+        string triggerName = type + (airAttack ? "Air" : "Ground") + variation;
         foreach (AnimatorControllerParameter parameter in animator.parameters)
         {
-            if (parameter.name == triggerName &&
-                parameter.type == AnimatorControllerParameterType.Trigger)
+            if (parameter.name == triggerName && parameter.type == AnimatorControllerParameterType.Trigger)
             {
                 animator.SetTrigger(triggerName);
                 return;
             }
         }
 
-        Debug.LogWarning(
-            "Animator trigger is missing: " + triggerName
-        );
+        if (type == AttackType.Light)
+            Debug.LogWarning("Animator trigger is missing: " + triggerName, this);
     }
 
     private AttackVariation GetAttackVariation(bool airAttack)
@@ -321,137 +282,106 @@ public class Combat : MonoBehaviour
         return AttackVariation.Neutral;
     }
 
+    private Vector2 GetHitboxDirection(AttackSettings settings)
+    {
+        Vector2 forward = facingRight ? Vector2.right : Vector2.left;
+
+        switch (settings.variation)
+        {
+            case AttackVariation.Up:
+                return Vector2.up;
+            case AttackVariation.Down when settings.isAirAttack:
+                return Vector2.down;
+            case AttackVariation.Backward:
+                return -forward;
+            default:
+                return forward;
+        }
+    }
+
     private void CheckForEnemies(AttackSettings settings)
     {
-        // Place the hitbox in front of the attacking player.
-        float direction = facingRight ? 1f : -1f;
-
-        Vector2 hitboxCenter =
-            (Vector2)transform.position +
-            new Vector2(direction * settings.range, 0f);
-
-        Collider2D[] hits = Physics2D.OverlapBoxAll(
-            hitboxCenter,
-            settings.hitboxSize,
-            0f
-        );
-
-        // Prevent hitting the same player more than once
-        // when they have multiple colliders.
-        HashSet<Combat> hitPlayers = new HashSet<Combat>();
+        Vector2 direction = GetHitboxDirection(settings);
+        Vector2 center = (Vector2)transform.position + direction * settings.range;
+        Collider2D[] hits = Physics2D.OverlapBoxAll(center, settings.hitboxSize, 0f);
+        var hitPlayers = new HashSet<Combat>();
 
         foreach (Collider2D hit in hits)
         {
-            Combat targetCombat =
-                hit.GetComponentInParent<Combat>();
-
-            // Ignore the attacker and objects that aren't players.
-            if (targetCombat == null || targetCombat == this)
+            Combat target = hit.GetComponentInParent<Combat>();
+            if (target == null || target == this || !hitPlayers.Add(target))
                 continue;
 
-            if (!hitPlayers.Add(targetCombat))
-                continue;
-
-            // Apply damage.
-            Damage damageScript =
-                targetCombat.GetComponent<Damage>();
-
-            if (damageScript == null)
-                damageScript =
-                    targetCombat.GetComponentInChildren<Damage>();
-
-            if (damageScript == null)
-                damageScript =
-                    targetCombat.GetComponentInParent<Damage>();
-
-            if (damageScript != null)
+            Damage targetDamage = target.damageReceiver;
+            if (targetDamage != null)
             {
-                damageScript.TakeDamage(settings.damage);
+                if (targetDamage.IsDefeated())
+                    continue;
+
+                int hitDamage = Mathf.Max(0, settings.damage);
+                bool lethalHit = hitDamage >= targetDamage.GetHealth();
+                targetDamage.TakeDamage(hitDamage);
+
+                // The stock manager may respawn the target during TakeDamage.
+                if (lethalHit)
+                    continue;
             }
             else
             {
-                Debug.LogWarning(
-                    targetCombat.name + " is missing a Damage component."
-                );
+                Debug.LogWarning(target.name + " is missing a Damage component.", target);
             }
 
-            // Apply knockback.
-            Knockback knockback =
-                targetCombat.GetComponent<Knockback>();
+            target.ApplyHitStun(target.hitStunDuration);
 
-            if (knockback == null)
-                knockback =
-                    targetCombat.GetComponentInChildren<Knockback>();
-
-            if (knockback == null)
-                knockback =
-                    targetCombat.GetComponentInParent<Knockback>();
-
-            if (knockback != null)
+            if (target.knockbackReceiver != null)
             {
-                knockback.ApplyKnockback(
+                float separation = target.transform.position.x - transform.position.x;
+                bool pushRight = Mathf.Approximately(separation, 0f)
+                    ? (direction.x == 0f ? facingRight : direction.x > 0f)
+                    : separation > 0f;
+
+                target.knockbackReceiver.ApplyKnockback(
                     settings.horizontalKnockback,
                     settings.verticalKnockback,
-                    facingRight
+                    pushRight
                 );
             }
-
-            // Apply hit stun.
-            targetCombat.ApplyHitStun(
-                targetCombat.hitStunDuration
-            );
-
-            Debug.Log(
-                targetCombat.name +
-                " was hit! Damage, knockback, and hit stun applied."
-            );
+            else
+            {
+                Debug.LogWarning(target.name + " is missing a Knockback component.", target);
+            }
         }
     }
 
     public void ApplyHitStun(float duration)
     {
-        // Restart the stun timer if hit again.
-        if (hitStunCoroutine != null)
+        if (duration <= 0f || !isActiveAndEnabled)
+            return;
+
+        if (!isStunned)
         {
-            StopCoroutine(hitStunCoroutine);
+            isStunned = true;
+            movementWasEnabled = movementScript != null && movementScript.enabled;
+            if (movementWasEnabled)
+                movementScript.enabled = false;
         }
 
-        hitStunCoroutine = StartCoroutine(
-            HitStunRoutine(duration)
-        );
+        hitStunEndsAt = Mathf.Max(hitStunEndsAt, Time.time + duration);
     }
 
-    private IEnumerator HitStunRoutine(float duration)
+    public void ClearHitStun()
     {
-        isStunned = true;
+        if (movementWasEnabled && movementScript != null)
+            movementScript.enabled = true;
 
-        // Remember whether movement was enabled before stun.
-        if (movementScript != null)
-        {
-            movementWasEnabled = movementScript.enabled;
-            movementScript.enabled = false;
-        }
-        else
-        {
-            Debug.LogWarning(
-                name + " has no Movement Script assigned for hit stun."
-            );
-        }
-
-        Debug.Log(name + " is in hit stun!");
-
-        yield return new WaitForSeconds(duration);
-
-        // Restore movement to its previous state.
-        if (movementScript != null)
-        {
-            movementScript.enabled = movementWasEnabled;
-        }
-
+        movementWasEnabled = false;
         isStunned = false;
-        hitStunCoroutine = null;
+        hitStunEndsAt = 0f;
+    }
 
-        Debug.Log(name + " recovered from hit stun!");
+    private void OnDisable()
+    {
+        ClearHitStun();
     }
 
     private void OnDrawGizmosSelected()
@@ -460,18 +390,13 @@ public class Combat : MonoBehaviour
             return;
 
         Gizmos.color = Color.red;
-
         foreach (AttackSettings settings in attackSettings)
         {
             if (settings == null)
                 continue;
 
-            float direction = facingRight ? 1f : -1f;
-
-            Vector2 center =
-                (Vector2)transform.position +
-                new Vector2(direction * settings.range, 0f);
-
+            Vector2 center = (Vector2)transform.position +
+                GetHitboxDirection(settings) * settings.range;
             Gizmos.DrawWireCube(center, settings.hitboxSize);
         }
     }

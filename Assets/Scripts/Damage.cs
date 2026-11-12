@@ -22,6 +22,12 @@ public class Damage : MonoBehaviour
         health = maxHealth;
     }
 
+    public void InitializeForMatch(int slot, Transform spawnPoint)
+    {
+        playerNumber = slot;
+        respawnPoint = spawnPoint;
+    }
+
     public void TakeDamage(int damage)
     {
         if (defeated)
@@ -53,6 +59,8 @@ public class Damage : MonoBehaviour
 
     public void RespawnPlayer()
     {
+        GetComponentInParent<Combat>()?.ClearHitStun();
+
         if (respawnPoint != null)
         {
             transform.position = respawnPoint.position;
