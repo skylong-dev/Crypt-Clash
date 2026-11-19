@@ -4,28 +4,15 @@ using UnityEngine.SceneManagement;
 
 public class MainMenuManager : MonoBehaviour
 {
-    // Scene names
-    public string loadingSceneName = "LoadingScreen";
-
-    // Play button
-    public void PlayGame()
+    // Load a scene using its name
+    public void LoadScene(string sceneName)
     {
-        SceneManager.LoadScene(loadingSceneName);
+        SceneManager.LoadScene(sceneName);
     }
 
-    // Settings button
-    public void OpenSettings()
-    {
-        Debug.Log("Settings button clicked!");
-        // Open your settings panel here
-    }
-
-    // Quit button
+    // Quit the game
     public void QuitGame()
     {
-        Debug.Log("Quitting game...");
-
         Application.Quit();
     }
 }
-
