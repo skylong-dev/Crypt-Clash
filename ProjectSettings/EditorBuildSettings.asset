@@ -29,5 +29,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Prefabs/Scenes/SettingsMenu.unity
     guid: dba776ab64e24d04992b939e6448bf6d
+  - enabled: 1
+    path: Assets/Prefabs/Scenes/WinnerMenu.unity
+    guid: 7e72c6a6b9e2e3a40bce63382484abc0
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

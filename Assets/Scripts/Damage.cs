@@ -1,7 +1,9 @@
+
 using UnityEngine;
 
 public class Damage : MonoBehaviour
 {
+    [Header("Health Settings")]
     public int maxHealth = 100;
     public int health = 100;
 
@@ -31,9 +33,7 @@ public class Damage : MonoBehaviour
     public void TakeDamage(int damage)
     {
         if (defeated)
-        {
             return;
-        }
 
         health -= damage;
         health = Mathf.Max(0, health);
@@ -44,23 +44,44 @@ public class Damage : MonoBehaviour
 
         if (health <= 0)
         {
-            defeated = true;
+            LoseStock();
+        }
+    }
 
-            if (MatchManager.Instance != null)
-            {
-                MatchManager.Instance.PlayerLostStock(playerNumber);
-            }
-            else
-            {
-                Debug.LogWarning("No MatchManager found.");
-            }
+    // Called when a player loses all health or falls off the stage
+    public void LoseStock()
+    {
+        if (defeated)
+            return;
+
+        defeated = true;
+
+        if (MatchManager.Instance != null)
+        {
+            MatchManager.Instance.PlayerLostStock(playerNumber);
+        }
+        else
+        {
+            Debug.LogWarning("No MatchManager found.");
         }
     }
 
     public void RespawnPlayer()
     {
+        if (defeated == false)
+            return;
+
+        // Clear combat hit stun
         GetComponentInParent<Combat>()?.ClearHitStun();
 
+        // Stop player movement
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+
+        // Return to individual spawn point
         if (respawnPoint != null)
         {
             transform.position = respawnPoint.position;
@@ -72,12 +93,10 @@ public class Damage : MonoBehaviour
             );
         }
 
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector2.zero;
-        }
-
+        // Restore health
         health = maxHealth;
+
+        // Allow player to fight again
         defeated = false;
     }
 
